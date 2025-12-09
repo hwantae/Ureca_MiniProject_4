@@ -71,4 +71,4 @@ logging:
     
   # pattern 키는 level과 동등한 위치에 설정
   pattern:
-    level: "%5p [%t] %-40.40c{1.}: %m%n"
+    level: "%5p [%t] %-40.40c{1}: %m%n"
