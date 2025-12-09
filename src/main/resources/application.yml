@@ -1,0 +1,74 @@
+# ========================================
+# 1. Spring 설정 (모든 spring 하위 설정을 통합)
+# ========================================
+spring:
+  # ----------------------------------------
+  # 환경 및 프로필 설정
+  # ----------------------------------------
+  profiles:
+    active: local # 기본 프로필 활성화
+  
+  # ----------------------------------------
+  # 서버 설정
+  # ----------------------------------------
+  server:
+    port: 8080 
+  
+  # ----------------------------------------
+  # 데이터소스 설정 (URL, User, Password는 local.yml에 분리 권장)
+  # ----------------------------------------
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  # ----------------------------------------
+  # JPA 설정
+  # ----------------------------------------
+  jpa:
+    show-sql: true 
+    
+    hibernate:
+      ddl-auto: update 
+      format-sql: true
+      
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    
+    properties:
+      hibernate:
+        default-batch-fetch-size: 100 # Batch Size 설정
+        
+  # ----------------------------------------
+  # Flyway 설정
+  # ----------------------------------------
+  flyway:
+    enabled: true
+    locations: classpath:db/migration 
+
+  # ----------------------------------------
+  # Jackson (JSON 직렬화) 설정 (중복되었던 항목 통합)
+  # ----------------------------------------
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+  # ----------------------------------------
+  # 개발 도구 설정 (중복되었던 항목 통합)
+  # ----------------------------------------
+  devtools:
+    restart:
+      enabled: true
+
+# ========================================
+# 2. 로깅 설정 (logging 하위 설정을 통합)
+# ========================================
+logging:
+  # level 키를 한 번만 사용하고 모든 레벨 설정을 여기에 통합
+  level:
+    root: info
+    
+    org.hibernate.SQL: debug        
+    org.hibernate.type: trace
+    com.example.reservationsystem: debug 
+    
+  # pattern 키는 level과 동등한 위치에 설정
+  pattern:
+    level: "%5p [%t] %-40.40c{1.}: %m%n"
