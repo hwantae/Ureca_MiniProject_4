@@ -9,7 +9,7 @@ public interface ReservationService {
 
     Reservation createReservation(Long userId, CreateReservationRequest request);
 
-    List<Reservation> getUserReservations(Long userId);
+    List<Reservation> getUserReservations(Long userId); // ← 구현체랑 맞추기
 
     void cancelReservation(Long userId, Long reservationId);
 }
