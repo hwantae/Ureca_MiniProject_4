@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Login</title>
+</head>
+<body>
+	<h1>login.html</h1>
+	<hr>
+
+	<input type="text" id="username" name="username" value="lee@gildong.com"><br>
+	<input type="text" id="password" name="password" value="1234"><br>
+	
+	<button id="btnLogin">Login</button>
+
+	<div id="errorMessage" style="color: red; margin-top: 10px;"></div>
+	
+<script>
+
+window.onload = function(){
+	
+	document.querySelector("#btnLogin").onclick = login;
+}
+
+async function login(){
+	let url = "/auth/login";
+	
+	let username = document.querySelector("#username").value;
+	let password = document.querySelector("#password").value;
+
+	let urlParams = new URLSearchParams({
+		username, password  // javascript es6 shorthand property 문법
+	});
+	
+	let fetchOptions = {
+		method: "post",
+		body: urlParams
+	}
+	
+	let response = await fetch(url, fetchOptions);
+	let data = await response.json();
+	
+	// token 발급 확인
+	console.log(data);
+	
+	// 로그인 결과에 따른 처리
+	if( data.result == "success" ){
+		sessionStorage.setItem('authToken', data.token);
+		window.location.href = "/";
+	}else{
+		document.querySelector("#errorMessage").innerText = "username 또는 password 가 올바르지 않습니다.";
+	}	
+}
+</script>	
+</body>
+</html>
+
+
+
+
+
+
+
+
