@@ -1,64 +1,163 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>Login</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>로그인</title>
+	<style>
+		body {
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			background-color: #f4f6f9;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			height: 100vh;
+			margin: 0;
+		}
+		.container {
+			background-color: #ffffff;
+			padding: 40px;
+			border-radius: 10px;
+			box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+			width: 100%;
+			max-width: 400px;
+		}
+		h1 {
+			text-align: center;
+			color: #333;
+			margin-bottom: 30px;
+			font-size: 24px;
+		}
+		.form-group {
+			margin-bottom: 20px;
+		}
+		label {
+			display: block;
+			margin-bottom: 5px;
+			color: #666;
+			font-weight: 500;
+		}
+		input {
+			width: 100%;
+			padding: 12px;
+			border: 1px solid #ddd;
+			border-radius: 5px;
+			box-sizing: border-box;
+			transition: border-color 0.3s;
+		}
+		input:focus {
+			outline: none;
+			border-color: #5c67f2;
+		}
+		button {
+			width: 100%;
+			padding: 12px;
+			background-color: #5c67f2;
+			color: white;
+			border: none;
+			border-radius: 5px;
+			font-size: 16px;
+			font-weight: bold;
+			cursor: pointer;
+			transition: background-color 0.3s;
+		}
+		button:hover {
+			background-color: #4a54c3;
+		}
+		#errorMessage {
+			color: #e74c3c;
+			text-align: center;
+			margin-top: 15px;
+			font-size: 14px;
+			min-height: 20px;
+		}
+		.link {
+			text-align: center;
+			margin-top: 20px;
+			font-size: 14px;
+		}
+		.link a {
+			color: #5c67f2;
+			text-decoration: none;
+		}
+	</style>
 </head>
 <body>
-	<h1>login.html</h1>
-	<hr>
+<div class="container">
+	<h1>Welcome Back</h1>
 
-	<input type="text" id="username" name="username" value="lee@gildong.com"><br>
-	<input type="text" id="password" name="password" value="1234"><br>
-	
+	<div class="form-group">
+		<label for="username">Email Address</label>
+		<input type="text" id="username" name="username" value="lee@gildong.com" placeholder="이메일을 입력하세요">
+	</div>
+
+	<div class="form-group">
+		<label for="password">Password</label>
+		<input type="password" id="password" name="password" value="1234" placeholder="비밀번호를 입력하세요">
+	</div>
+
 	<button id="btnLogin">Login</button>
 
-	<div id="errorMessage" style="color: red; margin-top: 10px;"></div>
-	
+	<div id="errorMessage"></div>
+
+	<div class="link">
+		계정이 없으신가요? <a href="/register.html">회원가입</a>
+	</div>
+</div>
+
 <script>
+	window.onload = function(){
+		document.querySelector("#btnLogin").onclick = login;
 
-window.onload = function(){
-	
-	document.querySelector("#btnLogin").onclick = login;
-}
-
-async function login(){
-	let url = "/auth/login";
-	
-	let username = document.querySelector("#username").value;
-	let password = document.querySelector("#password").value;
-
-	let urlParams = new URLSearchParams({
-		username, password  // javascript es6 shorthand property 문법
-	});
-	
-	let fetchOptions = {
-		method: "post",
-		body: urlParams
+		// 엔터키 로그인 지원
+		document.querySelector("#password").addEventListener("keypress", function(event) {
+			if (event.key === "Enter") {
+				login();
+			}
+		});
 	}
-	
-	let response = await fetch(url, fetchOptions);
-	let data = await response.json();
-	
-	// token 발급 확인
-	console.log(data);
-	
-	// 로그인 결과에 따른 처리
-	if( data.result == "success" ){
-		sessionStorage.setItem('authToken', data.token);
-		window.location.href = "/";
-	}else{
-		document.querySelector("#errorMessage").innerText = "username 또는 password 가 올바르지 않습니다.";
-	}	
-}
-</script>	
+
+	async function login(){
+		let url = "/auth/login";
+
+		let username = document.querySelector("#username").value;
+		let password = document.querySelector("#password").value;
+		let errorMsg = document.querySelector("#errorMessage");
+
+		errorMsg.innerText = ""; // 기존 에러 메시지 초기화
+
+		if(!username || !password) {
+			errorMsg.innerText = "이메일과 비밀번호를 모두 입력해주세요.";
+			return;
+		}
+
+		let urlParams = new URLSearchParams({
+			username, password
+		});
+
+		let fetchOptions = {
+			method: "post",
+			body: urlParams
+		}
+
+		try {
+			let response = await fetch(url, fetchOptions);
+			let data = await response.json();
+
+			console.log(data);
+
+			if( data.result == "success" ){
+				sessionStorage.setItem('authToken', data.token);
+				window.location.href = "/";
+			} else {
+				errorMsg.innerText = "아이디 또는 비밀번호가 올바르지 않습니다.";
+			}
+		} catch (error) {
+			console.error("Login Error:", error);
+			errorMsg.innerText = "서버 연결에 실패했습니다.";
+		}
+	}
+</script>
 </body>
 </html>
-
-
-
-
-
-
-
 

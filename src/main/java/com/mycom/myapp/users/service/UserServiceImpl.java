@@ -35,6 +35,7 @@ public class UserServiceImpl implements UserService{
                     .email(userDto.getEmail())
                     .password(passwordEncoder.encode(userDto.getPassword())) // 패스워드 암호화 후 저장
                     .userRoles(userRoles) // userRoles 는 findByName() 을 통해서 영속화
+                    .phonenumber(userDto.getPhoneNumber())
                     .build();
 
             Users savedUser = userRepository.save(users); // 전달받은 User 객체는 save() 를 통해 영속화
