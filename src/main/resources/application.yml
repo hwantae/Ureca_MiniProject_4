@@ -72,3 +72,8 @@ logging:
   # pattern 키는 level과 동등한 위치에 설정
   pattern:
     level: "%5p [%t] %-40.40c{1}: %m%n"
+
+myapp:
+  jwt:
+    secret: "v3ryS3cr3tK3yF0rJw7T0k3nG3n3r4t10nB4s364Enc0d3dStr1ng!!"
+    expiration: 3600000

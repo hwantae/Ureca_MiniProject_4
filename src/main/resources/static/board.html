@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<!--  초기 body 항목  전체를 처음부터 안보이게 하는 방법도 검토 -->
+	<h1>board.html</h1>
+	<hr>
+	<button id="btnLogout">Logout</button>
+<script src="/assets/js/common.js"></script>	
+<script>
+	window.onload = function(){
+		getBoardData()
+		
+		document.querySelector("#btnLogout").onclick = jwtLogout;
+	}
+	// Network Tab
+	// Request Header
+	// x-xsrf-token 1e872cfe-f038-455e-8c6a-1ddf92982cb6 확인
+	async function getBoardData(){
+		
+		let url = "/api/boards";
+		
+		const authToken = sessionStorage.getItem('authToken');
+
+		let fetchOptions = {
+			method: "GET",
+			headers: {
+				'X-AUTH-TOKEN': authToken
+	        }
+		}
+
+		let response = await fetch(url, fetchOptions);
+		let data = await response.json()
+		
+		// 로그인 하지 않으면 401 응답과 함께 result:login 응답이 MyAuthenticationEntryPoint 에 의해 넘어온다.
+		console.log(data);
+		
+		if( data.result == "login"){
+		    window.location.href = '/login';
+		}else{
+			alert("로그인 후 정상 접근 확인")
+		}
+		
+		// 성공했을 때, UI 작업은 생략
+	}
+
+	function jwtLogout(){
+		sessionStorage.removeItem('authToken');
+	    window.location.href = '/login';
+	}
+</script>	
+</body>
+</html>

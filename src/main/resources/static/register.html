@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>회원가입</title>
+	<style>
+		body {
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			background-color: #f4f6f9;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			height: 100vh;
+			margin: 0;
+		}
+		.container {
+			background-color: #ffffff;
+			padding: 40px;
+			border-radius: 10px;
+			box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+			width: 100%;
+			max-width: 400px;
+		}
+		h1 {
+			text-align: center;
+			color: #333;
+			margin-bottom: 30px;
+			font-size: 24px;
+		}
+		.form-group {
+			margin-bottom: 15px;
+		}
+		label {
+			display: block;
+			margin-bottom: 5px;
+			color: #666;
+			font-weight: 500;
+		}
+		input {
+			width: 100%;
+			padding: 12px;
+			border: 1px solid #ddd;
+			border-radius: 5px;
+			box-sizing: border-box; /* 패딩 포함 너비 계산 */
+			transition: border-color 0.3s;
+		}
+		input:focus {
+			outline: none;
+			border-color: #5c67f2;
+		}
+		button {
+			width: 100%;
+			padding: 12px;
+			background-color: #5c67f2;
+			color: white;
+			border: none;
+			border-radius: 5px;
+			font-size: 16px;
+			font-weight: bold;
+			cursor: pointer;
+			transition: background-color 0.3s;
+			margin-top: 10px;
+		}
+		button:hover {
+			background-color: #4a54c3;
+		}
+		.link {
+			text-align: center;
+			margin-top: 15px;
+			font-size: 14px;
+		}
+		.link a {
+			color: #5c67f2;
+			text-decoration: none;
+		}
+	</style>
+</head>
+<body>
+<div class="container">
+	<h1>Create Account</h1>
+
+	<div class="form-group">
+		<label for="name">Name</label>
+		<input type="text" id="name" name="name" placeholder="이름을 입력하세요">
+	</div>
+
+	<div class="form-group">
+		<label for="email">Email</label>
+		<input type="email" id="email" name="email" placeholder="example@email.com">
+	</div>
+
+	<div class="form-group">
+		<label for="phoneNumber">Phone Number</label>
+		<input type="tel" id="phoneNumber" name="phoneNumber" placeholder="010-1234-5678">
+	</div>
+
+	<div class="form-group">
+		<label for="password">Password</label>
+		<input type="password" id="password" name="password" placeholder="비밀번호">
+	</div>
+
+	<input type="hidden" id="_csrf" name="_csrf" value="">
+
+	<button id="btnRegister">Sign Up</button>
+
+	<div class="link">
+		이미 계정이 있으신가요? <a href="/login">로그인</a>
+	</div>
+</div>
+
+<script>
+	window.onload = function(){
+		getCsrfToken();
+		document.querySelector("#btnRegister").onclick = register;
+	}
+
+	// CSRF Token 가져오기
+	async function getCsrfToken(){
+		try {
+			let response = await fetch("/csrf-token", {method: "get", credentials: "same-origin"});
+			let data = await response.json();
+			document.querySelector("#_csrf").value = data.token;
+		} catch (error) {
+			console.error("CSRF Token Error:", error);
+		}
+	}
+
+	// 회원가입 요청
+	async function register(){
+		let url = "/users";
+
+		let name = document.querySelector("#name").value;
+		let email = document.querySelector("#email").value;
+		let password = document.querySelector("#password").value;
+		// 추가된 전화번호 값 가져오기
+		let phoneNumber = document.querySelector("#phoneNumber").value;
+		let _csrf = document.querySelector("#_csrf").value;
+
+		if(!name || !email || !password || !phoneNumber) {
+			alert("모든 필드를 입력해주세요.");
+			return;
+		}
+
+		// Backend의 UserDto 필드명과 일치해야 함 (보통 camelCase 사용: phoneNumber)
+		let urlParams = new URLSearchParams({
+			name, email, password, phoneNumber, _csrf
+		});
+
+		let fetchOptions = {
+			method: "post",
+			body: urlParams
+		}
+
+		try {
+			let response = await fetch(url, fetchOptions);
+			let data = await response.json();
+
+			console.log(data);
+
+			if( data.result == "success" ){
+				alert("회원가입 되었습니다. 로그인 페이지로 이동합니다.");
+				window.location.href = "/login";
+			} else {
+				alert("회원가입 과정에서 오류가 발생했습니다.");
+			}
+		} catch (error) {
+			console.error("Register Error:", error);
+			alert("서버 통신 중 오류가 발생했습니다.");
+		}
+	}
+</script>
+</body>
+</html>
