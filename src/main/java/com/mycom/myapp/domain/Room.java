@@ -10,9 +10,9 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class Room {
-    @Id
-    @GeneratedValue
-    private Long roomId;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long roomId;
     @Column(nullable = false, length = 100)
     private String name;
     @Column(nullable = false)
