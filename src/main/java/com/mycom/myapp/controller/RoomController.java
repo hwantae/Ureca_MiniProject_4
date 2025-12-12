@@ -36,8 +36,8 @@ public class RoomController {
     // 룸 활성화/비활성화 (공사, 청소 등)
     @PatchMapping("/name/{name}/availability")
     public ResponseEntity<RoomDTO> toggleRoomAvailabilityByName(
-            @PathVariable String name,
-            @RequestParam Boolean isAvailable) {
+            @PathVariable("name") String name,
+            @RequestParam("isAvailable") Boolean isAvailable) {
         return ResponseEntity.ok(roomService.toggleRoomAvailabilityByName(name, isAvailable));
     }
 }

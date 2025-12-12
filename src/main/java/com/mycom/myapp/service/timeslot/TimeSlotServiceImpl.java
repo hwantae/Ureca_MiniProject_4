@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,17 +50,23 @@ public class TimeSlotServiceImpl implements TimeSlotService {
 
     @Override
     @Transactional
-    public TimeSlotDTO createSlotByRoomName(String roomName, TimeSlotDTO dto) {
-        Long roomId = getRoomIdByName(roomName);
-        TimeSlot slot = TimeSlot.builder()
-                .roomId(roomId)
-                .slotDate(dto.getSlotDate())
-                .startTime(dto.getStartTime())
-                .endTime(dto.getEndTime())
-                .isAvailable(true)
-                .build();
-        TimeSlot savedSlot = timeSlotRepository.save(slot);
-        return TimeSlotDTO.from(savedSlot);
+    public List<TimeSlotDTO> createSlotForAllRooms(TimeSlotDTO dto) {
+        List<Room> allRooms = roomRepository.findAll();
+        List<TimeSlotDTO> createdSlots = new ArrayList<>();
+        
+        for (Room room : allRooms) {
+            TimeSlot slot = TimeSlot.builder()
+                    .roomId(room.getRoomId())
+                    .slotDate(dto.getSlotDate())
+                    .startTime(dto.getStartTime())
+                    .endTime(dto.getEndTime())
+                    .isAvailable(true)
+                    .build();
+            TimeSlot savedSlot = timeSlotRepository.save(slot);
+            createdSlots.add(TimeSlotDTO.from(savedSlot));
+        }
+        
+        return createdSlots;
     }
 
     @Override
@@ -66,6 +74,16 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     public TimeSlotDTO toggleSlotAvailability(Long slotId, Boolean isAvailable) {
         TimeSlot slot = timeSlotRepository.findById(slotId)
                 .orElseThrow(() -> new RuntimeException("Slot not found with id: " + slotId));
+        slot.setIsAvailable(isAvailable);
+        return TimeSlotDTO.from(slot);
+    }
+
+    @Override
+    @Transactional
+    public TimeSlotDTO toggleSlotAvailabilityByRoomAndTime(String roomName, LocalDate date, LocalTime startTime, Boolean isAvailable) {
+        Long roomId = getRoomIdByName(roomName);
+        TimeSlot slot = timeSlotRepository.findByRoomIdAndSlotDateAndStartTime(roomId, date, startTime)
+                .orElseThrow(() -> new RuntimeException("Slot not found for room: " + roomName + ", date: " + date + ", time: " + startTime));
         slot.setIsAvailable(isAvailable);
         return TimeSlotDTO.from(slot);
     }
