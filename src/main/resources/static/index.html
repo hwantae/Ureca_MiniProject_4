@@ -1,19 +1,131 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>스터디룸 예약 시스템</title>
+	<style>
+		/* 기본 초기화 */
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			font-family: 'Noto Sans KR', sans-serif; /* 한글 폰트 권장 */
+			background-color: #f4f7f6;
+			color: #333;
+			line-height: 1.6;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			height: 100vh;
+		}
+
+		/* 메인 컨테이너 */
+		.container {
+			background: white;
+			padding: 3rem 4rem;
+			border-radius: 15px;
+			box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+			text-align: center;
+			max-width: 500px;
+			width: 90%;
+		}
+
+		/* 헤더/타이틀 영역 */
+		header h1 {
+			font-size: 2rem;
+			color: #2c3e50;
+			margin-bottom: 0.5rem;
+		}
+
+		header p {
+			color: #7f8c8d;
+			margin-bottom: 2.5rem;
+		}
+
+		/* 메뉴 버튼 그룹 */
+		.menu-group {
+			display: flex;
+			flex-direction: column;
+			gap: 15px;
+		}
+
+		/* 공통 버튼 스타일 */
+		.btn {
+			display: block;
+			text-decoration: none;
+			padding: 15px;
+			border-radius: 8px;
+			font-weight: bold;
+			transition: all 0.3s ease;
+			font-size: 1.1rem;
+		}
+
+		/* 메인 액션 버튼 (로그인) */
+		.btn-primary {
+			background-color: #3498db;
+			color: white;
+		}
+		.btn-primary:hover {
+			background-color: #2980b9;
+			transform: translateY(-2px);
+			box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+		}
+
+		/* 서브 액션 버튼 (회원가입) */
+		.btn-secondary {
+			background-color: #fff;
+			color: #3498db;
+			border: 2px solid #3498db;
+		}
+		.btn-secondary:hover {
+			background-color: #ebf5fb;
+			transform: translateY(-2px);
+		}
+
+		/* 게시판 링크 스타일 */
+		.link-board {
+			margin-top: 1.5rem;
+			color: #95a5a6;
+			font-size: 0.9rem;
+			text-decoration: underline;
+			cursor: pointer;
+		}
+		.link-board:hover {
+			color: #7f8c8d;
+		}
+
+		/* 아이콘 효과 (선택사항) */
+		.icon {
+			margin-right: 8px;
+		}
+	</style>
 </head>
 <body>
-	<h1>index.html</h1>
-	<!-- PageController 를 통해서 페이지 이동 -->
-<!-- 	<a href="/board">게시판</a> -->
-	<a href="/board.html">게시판</a>
-	<a href="/login">로그인</a>
-	<a href="/register">회원가입</a>
-	<!-- 새로 추가, 개별 컨틀롤러를 통해서 데이터 응답 -->
-	<a href="/customer/hello">고객 hello</a>
-	<a href="/admin/hello">관리자 hello</a>
+
+<div class="container">
+	<header>
+		<h1>StudyRoom</h1>
+		<p>효율적인 학습을 위한 공간을 예약하세요.</p>
+	</header>
+
+	<div class="menu-group">
+		<a href="/login" class="btn btn-primary">
+			로그인하기
+		</a>
+
+		<a href="/register" class="btn btn-secondary">
+			회원가입
+		</a>
+	</div>
+
+	<div>
+		<a href="/board.html" class="link-board">공지사항 및 게시판 둘러보기</a>
+	</div>
+</div>
 
 </body>
 </html>
