@@ -24,7 +24,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String token  = jwtUtil.getTokenFromHeader(request);
+
+        System.out.println("========== Headers Start ==========");
+        java.util.Enumeration<String> headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String headerName = headerNames.nextElement();
+            System.out.println(headerName + ": " + request.getHeader(headerName));
+        }
+        System.out.println("========== Headers End ==========");
+
+        String token = jwtUtil.getTokenFromHeader(request);
+        System.out.println("Extracted Token: " + token);
+        //String token  = jwtUtil.getTokenFromHeader(request);
 
         Claims claims = null;
         if (token != null) {
@@ -74,6 +85,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
+        }
+        else{
+            System.out.println("no token");
         }
 
         filterChain.doFilter(request, response);

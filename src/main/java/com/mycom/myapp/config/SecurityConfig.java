@@ -54,11 +54,17 @@ public class SecurityConfig {
                                         "/auth/**",
                                         "/users/**",
                                         // board 는 로그인이 필요
-                                        "/board.html"	// hyberlink get 요청 허락
+                                        "/board.html",	// hyberlink get 요청 허락
 //                		"/csrf-token"
                                         // 껍데기만 허락
+                                        "/assets/**",
+                                        "/css/**",
+                                        "/js/**",
+                                        "/images/**",
+                                        "/favicon.ico",
+                                        "/error"
                                 ).permitAll()
-                                .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN")
+                                .requestMatchers("/users/**").hasAnyRole("USER", "ADMIN")
                                 .requestMatchers("/admin/**").hasRole("ADMIN")
                                 .anyRequest().authenticated()
                 )

@@ -1,56 +1,197 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyRoom - 게시판</title>
+    <style>
+        /* --- 디자인 스타일 (이전과 동일) --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            display: none; /* 로딩 전 숨김 */
+        }
+        nav {
+            background-color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .nav-brand {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            text-decoration: none;
+        }
+        #btnLogout {
+            background-color: transparent;
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #btnLogout:hover {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .page-title {
+            margin-bottom: 1.5rem;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            display: inline-block;
+        }
+        .board-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+        .board-table th, .board-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .board-table th {
+            background-color: #f8f9fa;
+            color: #555;
+            font-weight: 600;
+        }
+        .board-table tr:hover {
+            background-color: #f1f1f1;
+            cursor: pointer;
+        }
+        .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: #999;
+        }
+    </style>
 </head>
 <body>
-	<!--  초기 body 항목  전체를 처음부터 안보이게 하는 방법도 검토 -->
-	<h1>board.html</h1>
-	<hr>
-	<button id="btnLogout">Logout</button>
-<script src="/assets/js/common.js"></script>	
+
+<nav>
+    <a href="/" class="nav-brand">StudyRoom</a>
+    <button id="btnLogout">로그아웃</button>
+</nav>
+
+<div class="container">
+    <h2 class="page-title">공지사항 및 게시판</h2>
+    <table class="board-table">
+        <thead>
+        <tr>
+            <th style="width: 10%;">No</th>
+            <th style="width: 50%;">제목</th>
+            <th style="width: 20%;">작성자</th>
+            <th style="width: 20%;">작성일</th>
+        </tr>
+        </thead>
+        <tbody id="boardList">
+        </tbody>
+    </table>
+</div>
+
+<script src="/assets/js/common.js"></script>
 <script>
-	window.onload = function(){
-		getBoardData()
-		
-		document.querySelector("#btnLogout").onclick = jwtLogout;
-	}
-	// Network Tab
-	// Request Header
-	// x-xsrf-token 1e872cfe-f038-455e-8c6a-1ddf92982cb6 확인
-	async function getBoardData(){
-		
-		let url = "/api/boards";
-		
-		const authToken = sessionStorage.getItem('authToken');
+    window.onload = function(){
+        getBoardData();
 
-		let fetchOptions = {
-			method: "GET",
-			headers: {
-				'X-AUTH-TOKEN': authToken
-	        }
-		}
+        // common.js의 기능과 세션 삭제 기능을 합친 핸들러 연결
+        document.querySelector("#btnLogout").onclick = handleLogout;
+    }
 
-		let response = await fetch(url, fetchOptions);
-		let data = await response.json()
-		
-		// 로그인 하지 않으면 401 응답과 함께 result:login 응답이 MyAuthenticationEntryPoint 에 의해 넘어온다.
-		console.log(data);
-		
-		if( data.result == "login"){
-		    window.location.href = '/login';
-		}else{
-			alert("로그인 후 정상 접근 확인")
-		}
-		
-		// 성공했을 때, UI 작업은 생략
-	}
+    async function getBoardData(){
+        let url = "/api/boards";
+        const authToken = sessionStorage.getItem('authToken');
 
-	function jwtLogout(){
-		sessionStorage.removeItem('authToken');
-	    window.location.href = '/login';
-	}
-</script>	
+        // 1. 토큰 유무 확인
+        if (!authToken) {
+            alert("로그인이 필요합니다.");
+            window.location.href = '/login';
+            return;
+        }
+
+        // 2. csrfFetch 사용 (fetch 대신)
+        // common.js가 자동으로 CSRF 헤더를 추가해주지만,
+        // JWT(X-AUTH-TOKEN)는 우리가 직접 넣어줘야 함
+        let fetchOptions = {
+            method: "GET",
+            headers: {
+                'X-AUTH-TOKEN': authToken
+            }
+        };
+
+        try {
+            // ★ csrfFetch 호출 (common.js 함수)
+            let response = await csrfFetch(url, fetchOptions);
+
+            if (response.status === 401 || response.status === 403) {
+                throw new Error("Unauthorized");
+            }
+
+            let data = await response.json();
+
+            if(data.result === "login"){
+                throw new Error("Session Expired");
+            }
+
+            // 데이터 렌더링
+            renderTable(data.list || []); // 서버 응답 키값에 따라 수정 (data.list 등)
+
+            // 화면 표시
+            document.body.style.display = 'block';
+
+        } catch (error) {
+            console.error("Fetch Error:", error);
+            sessionStorage.removeItem('authToken'); // 에러 시 토큰 삭제
+            window.location.href = '/login';
+        }
+    }
+
+    function renderTable(list) {
+        const tbody = document.querySelector("#boardList");
+        let html = '';
+
+        if(!list || list.length === 0) {
+            html = '<tr><td colspan="4" class="no-data">등록된 게시글이 없습니다.</td></tr>';
+        } else {
+            list.forEach((item) => {
+                html += `
+                    <tr>
+                        <td>${item.id}</td>
+                        <td>${item.title}</td>
+                        <td>${item.writer || '관리자'}</td>
+                        <td>${item.regDate || '-'}</td>
+                    </tr>
+                `;
+            });
+        }
+        tbody.innerHTML = html;
+    }
+
+    // 로그아웃 통합 처리
+    async function handleLogout() {
+        // 1. 클라이언트 측 토큰 삭제 (JWT)
+        sessionStorage.removeItem('authToken');
+
+        // 2. 서버 측 로그아웃 처리 (common.js의 csrfLogout 호출)
+        // common.js 안에서 /logout 호출 후 페이지 이동까지 처리되어 있음
+        await csrfLogout();
+    }
+</script>
 </body>
 </html>
