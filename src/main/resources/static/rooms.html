@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스터디룸 예약 시스템</title>
+    <title>스터디룸 예약</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -19,6 +19,18 @@
             color: #333;
         }
 
+        .header {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .admin-link {
+            color: #888;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+
         .room-list {
             display: flex;
             flex-wrap: wrap;
@@ -31,10 +43,13 @@
             padding: 20px;
             width: 200px;
             cursor: pointer;
+            border-radius: 8px;
+            transition: transform 0.2s;
         }
 
         .room-card:hover {
-            background: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         .room-name {
@@ -50,17 +65,14 @@
         .unavailable {
             color: red;
         }
-
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: #666;
-        }
     </style>
 </head>
 
 <body>
+
+
     <h1>스터디룸 예약</h1>
+
     <div id="rooms" class="room-list">
         <div class="loading">로딩 중...</div>
     </div>
@@ -70,11 +82,10 @@
             try {
                 const res = await fetch('/api/rooms');
                 const rooms = await res.json();
-
                 document.getElementById('rooms').innerHTML = rooms.length === 0
                     ? '<p>등록된 룸이 없습니다.</p>'
                     : rooms.map(r => `
-                        <div class="room-card" onclick="location.href='room.html?name=${r.name}'">
+                        <div class="room-card" onclick="location.href='room.html?name=' + encodeURIComponent('${r.name}')">
                             <div class="room-name">${r.name}</div>
                             <div>수용: ${r.capacity}명</div>
                             <div class="${r.isAvailable ? 'available' : 'unavailable'}">

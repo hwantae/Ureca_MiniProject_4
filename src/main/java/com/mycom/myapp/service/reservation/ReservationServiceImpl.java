@@ -45,9 +45,10 @@ public class ReservationServiceImpl implements ReservationService {
             throw new ReservationException("타임슬롯이 해당 룸에 속해있지 않습니다.");
         }
 
-        if (!timeSlot.getIsAvailable()) {
-            throw new ReservationException("현재 예약할 수 없는 타임슬롯입니다.");
-        }
+        // TODO: V5 적용 후 B담당 수정 필요 - isAvailable 필드 제거됨
+        // if (!timeSlot.getIsAvailable()) {
+        //     throw new ReservationException("현재 예약할 수 없는 타임슬롯입니다.");
+        // }
 
         // 3. 타임슬롯 자체의 시간 범위 검증 (start < end)
         validator.validateTimeSlotRange(timeSlot);

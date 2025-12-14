@@ -40,4 +40,25 @@ public class RoomController {
             @RequestParam("isAvailable") Boolean isAvailable) {
         return ResponseEntity.ok(roomService.toggleRoomAvailabilityByName(name, isAvailable));
     }
+
+    // 룸 수정
+    @PutMapping("/{id}")
+    public ResponseEntity<RoomDTO> updateRoom(@PathVariable("id") Long id, @RequestBody RoomDTO dto) {
+        return ResponseEntity.ok(roomService.updateRoom(id, dto));
+    }
+
+    // 룸 삭제
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRoom(@PathVariable("id") Long id) {
+        roomService.deleteRoom(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // 전체 룸 최대 이용 시간 변경
+    @PutMapping("/config/max-usage")
+    public ResponseEntity<Void> updateMaxUsage(@RequestBody java.util.Map<String, Integer> body) {
+        Integer minutes = body.get("minutes");
+        roomService.updateAllRoomsMaxUsage(minutes);
+        return ResponseEntity.ok().build();
+    }
 }

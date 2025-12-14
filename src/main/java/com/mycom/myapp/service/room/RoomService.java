@@ -13,5 +13,15 @@ public interface RoomService {
     RoomDTO createRoom(RoomDTO dto);
     
     // 이름으로 룸 활성화/비활성화 (관리자)
+    // 이름으로 룸 활성화/비활성화 (관리자)
     RoomDTO toggleRoomAvailabilityByName(String name, Boolean isAvailable);
+
+    // 룸 수정
+    RoomDTO updateRoom(Long id, RoomDTO dto);
+
+    // 룸 삭제
+    void deleteRoom(Long id);
+
+    // 전체 룸 최대 이용 시간 설정
+    void updateAllRoomsMaxUsage(Integer minutes);
 }

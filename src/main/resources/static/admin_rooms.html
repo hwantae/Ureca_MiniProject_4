@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 스터디룸 관리</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff0f0;
+        }
+
+        /* 관리자는 배경색 구분 */
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .home-link {
+            color: #666;
+            text-decoration: none;
+        }
+
+        button {
+            padding: 8px 15px;
+            cursor: pointer;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button.primary {
+            background: #d9534f;
+            color: white;
+            border: none;
+        }
+
+        /* Red for admin */
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .room-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .room-card {
+            background: #fff;
+            border: 2px solid #d9534f;
+            padding: 20px;
+            width: 200px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        /* Red border */
+        .room-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background: #fff;
+            margin: 100px auto;
+            padding: 20px;
+            width: 400px;
+            border-radius: 8px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .slot-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .time-row {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 5px;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <a href="rooms.html" class="home-link">← 사용자 페이지로</a>
+        <div>
+            <button onclick="openConfigModal()">⚙️ 운영 시간 설정</button>
+            <button class="primary" onclick="openAddRoomModal()">+ 룸 추가</button>
+        </div>
+    </div>
+
+    <h1>🔧 관리자 페이지</h1>
+
+    <div id="rooms" class="room-list"></div>
+
+    <!-- 룸 추가 모달 -->
+    <div id="addRoomModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>스터디룸 추가</h3><button onclick="closeModal('addRoomModal')">X</button>
+            </div>
+            <div class="form-group"><label>룸 이름</label><input type="text" id="newRoomName"></div>
+            <div class="form-group"><label>수용 인원</label><input type="number" id="newRoomCapacity" value="4"></div>
+            <button class="primary" onclick="createRoom()">생성</button>
+        </div>
+    </div>
+
+    <!-- 룸 수정 모달 -->
+    <div id="editRoomModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>스터디룸 수정</h3><button onclick="closeModal('editRoomModal')">X</button>
+            </div>
+            <input type="hidden" id="editRoomId">
+            <div class="form-group"><label>룸 이름</label><input type="text" id="editRoomName"></div>
+            <div class="form-group"><label>수용 인원</label><input type="number" id="editRoomCapacity"></div>
+            <button class="primary" onclick="updateRoom()">저장</button>
+        </div>
+    </div>
+
+    <!-- 운영 시간 설정 모달 -->
+    <div id="configModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>운영 시간 및 규칙 설정 (전체)</h3><button onclick="closeModal('configModal')">X</button>
+            </div>
+            <p style="font-size:0.9em; color:#666; margin-bottom:15px;">
+                모든 룸에 공통으로 적용되는 설정입니다.
+            </p>
+
+            <div class="form-group">
+                <label>운영 시간 (시작 ~ 종료)</label>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <input type="time" id="globalStart" value="09:00">
+                    <span>~</span>
+                    <input type="time" id="globalEnd" value="22:00">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>최대 이용 시간 (시간 단위 권장)</label>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <input type="number" id="globalMaxUsage" value="120" step="30" min="30">
+                    <span>분</span>
+                </div>
+                <p style="font-size:0.8em; color:#888; margin-top:5px;">* 예: 120분 = 2시간</p>
+            </div>
+
+            <div style="margin-top:20px; text-align:right;"><button class="primary" onclick="saveConfig()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 룸 목록 로드 ---
+        async function loadRooms() {
+            try {
+                const res = await fetch('/api/rooms'); // 기존 API 재사용
+                const rooms = await res.json();
+                document.getElementById('rooms').innerHTML = rooms.map(r => `
+                    <div class="room-card" onclick="location.href='admin_room.html?name=' + encodeURIComponent('${r.name}')">
+                        <div class="room-name">${r.name}</div>
+                        <div>수용: ${r.capacity}명</div>
+                        <div style="color:#666; margin-top:5px; font-size:0.9em;">클릭하여 블록 관리</div>
+                        <div style="margin-top:10px; display:flex; gap:5px;" onclick="event.stopPropagation()">
+                            <button onclick="openEditRoomModal(${r.roomId}, '${r.name}', ${r.capacity})">수정</button>
+                            <button onclick="deleteRoom(${r.roomId}, '${r.name}')" style="background:#fee; color:red; border:1px solid red;">삭제</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) { alert('로드 실패'); }
+        }
+        loadRooms();
+
+        // --- 모달 로직 ---
+        function openAddRoomModal() { document.getElementById('addRoomModal').style.display = 'block'; }
+
+        // 룸 수정 모달 열기
+        function openEditRoomModal(id, name, capacity) {
+            document.getElementById('editRoomId').value = id;
+            document.getElementById('editRoomName').value = name;
+            document.getElementById('editRoomCapacity').value = capacity;
+            document.getElementById('editRoomModal').style.display = 'block';
+        }
+
+        async function openConfigModal() {
+            // 1. 운영 시간
+            const res = await fetch('/api/slots/config');
+            const configs = await res.json();
+            if (configs.length > 0) {
+                document.getElementById('globalStart').value = configs[0].startTime.substring(0, 5);
+                document.getElementById('globalEnd').value = configs[0].endTime.substring(0, 5);
+            }
+
+            // 2. 최대 이용 시간 (첫 번째 룸 기준)
+            const roomsRes = await fetch('/api/rooms');
+            const rooms = await roomsRes.json();
+            if (rooms.length > 0) {
+                document.getElementById('globalMaxUsage').value = rooms[0].maxUsageMinutes;
+            }
+
+            document.getElementById('configModal').style.display = 'block';
+        }
+
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        async function createRoom() {
+            const name = document.getElementById('newRoomName').value;
+            const capacity = document.getElementById('newRoomCapacity').value;
+            if (!name) return alert('이름 입력');
+            await fetch('/api/rooms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, capacity }) });
+            closeModal('addRoomModal'); loadRooms();
+        }
+
+        async function updateRoom() {
+            const id = document.getElementById('editRoomId').value;
+            const name = document.getElementById('editRoomName').value;
+            const capacity = document.getElementById('editRoomCapacity').value;
+            if (!name) return alert('이름 입력');
+
+            await fetch(`/api/rooms/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, capacity: parseInt(capacity) })
+            });
+            closeModal('editRoomModal');
+            loadRooms();
+        }
+
+        async function deleteRoom(id, name) {
+            if (!confirm(`정말 '${name}' 룸을 삭제하시겠습니까?\n관련된 예약 설정이 모두 삭제됩니다.`)) return;
+            await fetch(`/api/rooms/${id}`, { method: 'DELETE' });
+            loadRooms();
+        }
+
+        async function saveConfig() {
+            if (!confirm('모든 룸의 운영 시간과 이용 규칙이 변경됩니다.\n계속하시겠습니까?')) return;
+
+            const start = document.getElementById('globalStart').value;
+            const end = document.getElementById('globalEnd').value;
+            const maxUsage = document.getElementById('globalMaxUsage').value;
+
+            if (!start || !end || !maxUsage) return alert('모든 항목을 입력하세요');
+            if (start >= end) return alert('종료 시간은 시작 시간보다 뒤여야 합니다');
+
+            // 1. 운영 시간
+            const data = [{ startTime: start, endTime: end }];
+            await fetch('/api/slots/config', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+
+            // 2. 최대 이용 시간
+            await fetch('/api/rooms/config/max-usage', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ minutes: parseInt(maxUsage) })
+            });
+
+            closeModal('configModal');
+            alert('저장 완료');
+        }
+    </script>
+</body>
+
+</html>

@@ -9,12 +9,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * TimeSlotServiceImpl (V5 구조)
+ * - 날짜 없이 시간 템플릿만 관리
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -33,17 +35,9 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     }
 
     @Override
-    public List<TimeSlotDTO> getSlotsByRoomNameAndDate(String roomName, LocalDate date) {
-        Long roomId = getRoomIdByName(roomName);
-        return timeSlotRepository.findByRoomIdAndSlotDate(roomId, date).stream()
-                .map(TimeSlotDTO::from)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public List<TimeSlotDTO> getSlotsByRoomName(String roomName) {
         Long roomId = getRoomIdByName(roomName);
-        return timeSlotRepository.findByRoomId(roomId).stream()
+        return timeSlotRepository.findByRoomIdOrderByStartTimeAsc(roomId).stream()
                 .map(TimeSlotDTO::from)
                 .collect(Collectors.toList());
     }
@@ -57,10 +51,8 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         for (Room room : allRooms) {
             TimeSlot slot = TimeSlot.builder()
                     .roomId(room.getRoomId())
-                    .slotDate(dto.getSlotDate())
                     .startTime(dto.getStartTime())
                     .endTime(dto.getEndTime())
-                    .isAvailable(true)
                     .build();
             TimeSlot savedSlot = timeSlotRepository.save(slot);
             createdSlots.add(TimeSlotDTO.from(savedSlot));
@@ -70,21 +62,30 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     }
 
     @Override
-    @Transactional
-    public TimeSlotDTO toggleSlotAvailability(Long slotId, Boolean isAvailable) {
-        TimeSlot slot = timeSlotRepository.findById(slotId)
-                .orElseThrow(() -> new RuntimeException("Slot not found with id: " + slotId));
-        slot.setIsAvailable(isAvailable);
-        return TimeSlotDTO.from(slot);
+    public List<com.mycom.myapp.dto.SlotConfigDTO> getGlobalConfig() {
+        return timeSlotRepository.findDistinctConfigs();
     }
 
     @Override
     @Transactional
-    public TimeSlotDTO toggleSlotAvailabilityByRoomAndTime(String roomName, LocalDate date, LocalTime startTime, Boolean isAvailable) {
-        Long roomId = getRoomIdByName(roomName);
-        TimeSlot slot = timeSlotRepository.findByRoomIdAndSlotDateAndStartTime(roomId, date, startTime)
-                .orElseThrow(() -> new RuntimeException("Slot not found for room: " + roomName + ", date: " + date + ", time: " + startTime));
-        slot.setIsAvailable(isAvailable);
-        return TimeSlotDTO.from(slot);
+    public void updateGlobalConfig(List<com.mycom.myapp.dto.SlotConfigDTO> configs) {
+        // 1. 기존 모든 슬롯 삭제 (주의: 실제 운영 환경에서는 예약된 슬롯 처리 필요)
+        // 현재는 단순하게 모두 삭제 후 재생성 (B담당 예약 데이터와 무결성 주의)
+        timeSlotRepository.deleteAll();
+
+        // 2. 모든 방 조회
+        List<Room> allRooms = roomRepository.findAll();
+
+        // 3. 각 방마다 새 설정대로 슬롯 생성
+        for (Room room : allRooms) {
+            for (com.mycom.myapp.dto.SlotConfigDTO config : configs) {
+                TimeSlot slot = TimeSlot.builder()
+                        .roomId(room.getRoomId())
+                        .startTime(config.getStartTime())
+                        .endTime(config.getEndTime())
+                        .build();
+                timeSlotRepository.save(slot);
+            }
+        }
     }
 }
