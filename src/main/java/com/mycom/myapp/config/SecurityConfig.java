@@ -70,7 +70,9 @@ public class SecurityConfig {
                                         "/admin_rooms.html",
                                         "/admin_room.html",
                                         "/api/rooms/**",
-                                        "/api/slots/**"
+                                        "/api/slots/**",
+                                        "/board_write.html",
+                                        "/api/boards/**"
                                 ).permitAll()
                                 .requestMatchers("/users/**").hasAnyRole("USER", "ADMIN")
                                 .requestMatchers("/admin/**").hasRole("ADMIN")
