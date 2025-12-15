@@ -104,7 +104,48 @@
         </tbody>
     </table>
 </div>
+<div class="board-actions">
+    <button type="button" class="btn-reservation" onclick="location.href='rooms.html'">
+        예약하기
+    </button>
+    <button type="button" class="btn-manage" onclick="location.href='admin_rooms.html'">
+        관리하기
+    </button>
+</div>
 
+<style>
+    .board-actions {
+        margin-top: 20px;
+        display: flex;          /* 플렉스박스 사용 */
+        justify-content: center; /* ★ 여기가 핵심: 요소를 가운데 정렬합니다 ★ */
+        gap: 10px;              /* 버튼 사이 간격 */
+    }
+
+    .board-actions button {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+        color: white;
+    }
+
+    /* 예약하기 버튼 색상 */
+    .btn-reservation {
+        background-color: #007bff;
+    }
+    .btn-reservation:hover {
+        background-color: #0056b3;
+    }
+
+    /* 관리하기 버튼 색상 */
+    .btn-manage {
+        background-color: #6c757d;
+    }
+    .btn-manage:hover {
+        background-color: #545b62;
+    }
+</style>
 <script src="/assets/js/common.js"></script>
 <script>
     window.onload = function(){

@@ -148,6 +148,23 @@
 
 			if( data.result == "success" ){
 				sessionStorage.setItem('authToken', data.token);
+				// 2. 권한 정보 저장 (구조: data -> userDto -> role)
+				// role은 List<String>이므로 ["ROLE_ADMIN"] 같은 배열입니다.
+				// sessionStorage에는 문자열만 저장되므로 JSON.stringify로 변환합니다.
+				if (data.userDto && data.userDto.role) {
+					// 배열(List)을 문자열로 바꿔서 저장해야 함
+					sessionStorage.setItem('roles', JSON.stringify(data.userDto.role));
+
+					console.log("권한 저장 완료:", data.userDto.role); // 확인용 로그
+				} else {
+					console.warn("서버 응답에 권한 정보가 없습니다.");
+				}
+
+				// 3. 사용자 이름 저장 (환영 메시지용)
+				if (data.userDto && data.userDto.name) {
+					sessionStorage.setItem('userName', data.userDto.name);
+				}
+				alert("로그인 성공!");
 				window.location.href = "/board.html";
 			} else {
 				errorMsg.innerText = "아이디 또는 비밀번호가 올바르지 않습니다.";

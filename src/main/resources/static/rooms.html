@@ -17,12 +17,33 @@
         h1 {
             text-align: center;
             color: #333;
+            margin-top: 10px;
         }
 
+        /* ★ 헤더 스타일 수정: 버튼과 타이틀 배치를 위해 flex 사용 */
         .header {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            /* 좌측, 우측 요소 끝으로 배치 */
+            align-items: center;
             margin-bottom: 20px;
+        }
+
+        /* ★ 게시판 버튼 스타일 추가 */
+        .btn-board {
+            padding: 8px 15px;
+            background-color: #6c757d;
+            /* 회색 계열 */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .btn-board:hover {
+            background-color: #545b62;
         }
 
         .admin-link {
@@ -70,7 +91,8 @@
 
 <body>
 
-    <div class="header" style="justify-content: space-between; padding: 10px 20px;">
+    <div class="header">
+        <button class="btn-board" onclick="location.href='board.html'">← 게시판으로</button>
         <span id="user-greeting" style="font-weight: bold; color: #555;"></span>
     </div>
 
