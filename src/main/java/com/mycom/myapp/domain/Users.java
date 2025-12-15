@@ -29,7 +29,7 @@ public class Users {
     @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(unique = true, length = 20)
+    @Column(name = "phone_number", unique = true, length = 20)
     private String phonenumber;
 
     @ManyToMany(fetch = FetchType.EAGER)
