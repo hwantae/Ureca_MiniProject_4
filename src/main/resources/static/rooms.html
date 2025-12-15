@@ -106,12 +106,19 @@
         // 사용자 정보 로드
         async function loadUserInfo() {
             try {
-                const res = await fetch('/users/info');
+                const authToken = sessionStorage.getItem('authToken');
+                if (!authToken) {
+                    document.getElementById('user-greeting').innerHTML = '<a href="/login">로그인 필요</a>';
+                    return;
+                }
+                const res = await fetch('/users/info', {
+                    headers: { 'X-AUTH-TOKEN': authToken }
+                });
                 if (res.ok) {
                     const user = await res.json();
                     document.getElementById('user-greeting').textContent = `안녕하세요 ${user.name}님`;
                 } else {
-                    document.getElementById('user-greeting').innerHTML = '<a href="/index.html">로그인 필요</a>';
+                    document.getElementById('user-greeting').innerHTML = '<a href="/login">로그인 필요</a>';
                 }
             } catch (e) {
                 console.error('User info load failed', e);
