@@ -70,6 +70,9 @@
 
 <body>
 
+    <div class="header" style="justify-content: space-between; padding: 10px 20px;">
+        <span id="user-greeting" style="font-weight: bold; color: #555;"></span>
+    </div>
 
     <h1>스터디룸 예약</h1>
 
@@ -78,6 +81,22 @@
     </div>
 
     <script>
+        // 사용자 정보 로드
+        async function loadUserInfo() {
+            try {
+                const res = await fetch('/users/info');
+                if (res.ok) {
+                    const user = await res.json();
+                    document.getElementById('user-greeting').textContent = `안녕하세요 ${user.name}님`;
+                } else {
+                    document.getElementById('user-greeting').innerHTML = '<a href="/index.html">로그인 필요</a>';
+                }
+            } catch (e) {
+                console.error('User info load failed', e);
+            }
+        }
+        loadUserInfo();
+
         async function loadRooms() {
             try {
                 const res = await fetch('/api/rooms');
