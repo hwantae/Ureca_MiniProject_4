@@ -41,7 +41,7 @@ spring:
   # ----------------------------------------
   flyway:
     enabled: true
-    locations: classpath:db/migration 
+    locations: classpath:db/migration
 
   # ----------------------------------------
   # Jackson (JSON 직렬화) 설정 (중복되었던 항목 통합)

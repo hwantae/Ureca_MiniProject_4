@@ -23,6 +23,10 @@ ALTER TABLE time_slot DROP COLUMN slot_date;
 -- is_available 컬럼 제거 (room_time_block으로 대체)
 ALTER TABLE time_slot DROP COLUMN is_available;
 
+-- 3. Reservation 테이블에 날짜 컬럼 추가 및 Unique 제약조건 설정 (동시성 제어용)
+ALTER TABLE reservation ADD COLUMN reservation_date DATE NOT NULL;
+ALTER TABLE reservation ADD CONSTRAINT unique_reservation_slot UNIQUE (room_id, slot_id, reservation_date);
+
 -- 새 UNIQUE 제약 추가 (방 + 시간대 템플릿)
 ALTER TABLE time_slot
     ADD CONSTRAINT unique_room_time_template

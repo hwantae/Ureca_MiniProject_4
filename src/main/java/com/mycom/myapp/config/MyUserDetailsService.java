@@ -37,7 +37,7 @@ public class MyUserDetailsService implements UserDetailsService {
             return MyUserDetails.builder()
                     .username(users.getEmail())
                     .password(users.getPassword())
-                    //.authorities(authorities)
+                    .authorities(authorities)
                     .id(users.getUserId())
                     .name(users.getName())
                     .email(users.getEmail())

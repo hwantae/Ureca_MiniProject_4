@@ -12,7 +12,8 @@ import java.time.LocalTime;
  */
 @Entity
 @Table(name = "time_slot")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
@@ -30,4 +31,7 @@ public class TimeSlot {
 
     @Column(nullable = false)
     private LocalTime endTime;
+
+    // V5: isAvailable, slotDate 제거됨
+    // V5: version 필드는 템플릿 변경 관리를 위해 남겨둘 수 있으나, 예약 동시성 제어용으로는 사용 불가
 }
