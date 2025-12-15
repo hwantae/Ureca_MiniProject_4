@@ -126,9 +126,26 @@
         }
         loadUserInfo();
 
+        // 룸 목록 로드 (JWT 인증 포함)
         async function loadRooms() {
+            let url = "/api/rooms";
+            const authToken = sessionStorage.getItem('authToken');
+
+            if (!authToken) {
+                alert("로그인이 필요합니다.");
+                window.location.href = '/login';
+                return;
+            }
+
+            let fetchOptions = {
+                method: "GET",
+                headers: {
+                    'X-AUTH-TOKEN': authToken
+                }
+            };
+
             try {
-                const res = await fetch('/api/rooms');
+                const res = await fetch(url, fetchOptions);
                 const rooms = await res.json();
                 document.getElementById('rooms').innerHTML = rooms.length === 0
                     ? '<p>등록된 룸이 없습니다.</p>'
