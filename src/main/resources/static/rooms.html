@@ -17,12 +17,31 @@
         h1 {
             text-align: center;
             color: #333;
+            margin-top: 10px;
         }
 
+        /* ★ 헤더 스타일 수정: 버튼과 타이틀 배치를 위해 flex 사용 */
         .header {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between; /* 좌측, 우측 요소 끝으로 배치 */
+            align-items: center;
             margin-bottom: 20px;
+        }
+
+        /* ★ 게시판 버튼 스타일 추가 */
+        .btn-board {
+            padding: 8px 15px;
+            background-color: #6c757d; /* 회색 계열 */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .btn-board:hover {
+            background-color: #545b62;
         }
 
         .admin-link {
@@ -70,21 +89,25 @@
 
 <body>
 
+<div class="header">
+    <button class="btn-board" onclick="location.href='board.html'">← 게시판으로</button>
 
-    <h1>스터디룸 예약</h1>
+</div>
 
-    <div id="rooms" class="room-list">
-        <div class="loading">로딩 중...</div>
-    </div>
+<h1>스터디룸 예약</h1>
 
-    <script>
-        async function loadRooms() {
-            try {
-                const res = await fetch('/api/rooms');
-                const rooms = await res.json();
-                document.getElementById('rooms').innerHTML = rooms.length === 0
-                    ? '<p>등록된 룸이 없습니다.</p>'
-                    : rooms.map(r => `
+<div id="rooms" class="room-list">
+    <div class="loading">로딩 중...</div>
+</div>
+
+<script>
+    async function loadRooms() {
+        try {
+            const res = await fetch('/api/rooms');
+            const rooms = await res.json();
+            document.getElementById('rooms').innerHTML = rooms.length === 0
+                ? '<p>등록된 룸이 없습니다.</p>'
+                : rooms.map(r => `
                         <div class="room-card" onclick="location.href='room.html?name=' + encodeURIComponent('${r.name}')">
                             <div class="room-name">${r.name}</div>
                             <div>수용: ${r.capacity}명</div>
@@ -93,12 +116,12 @@
                             </div>
                         </div>
                     `).join('');
-            } catch (e) {
-                document.getElementById('rooms').innerHTML = '<p>오류 발생</p>';
-            }
+        } catch (e) {
+            document.getElementById('rooms').innerHTML = '<p>오류 발생</p>';
         }
-        loadRooms();
-    </script>
+    }
+    loadRooms();
+</script>
 </body>
 
 </html>
