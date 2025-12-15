@@ -23,7 +23,8 @@
         /* ★ 헤더 스타일 수정: 버튼과 타이틀 배치를 위해 flex 사용 */
         .header {
             display: flex;
-            justify-content: space-between; /* 좌측, 우측 요소 끝으로 배치 */
+            justify-content: space-between;
+            /* 좌측, 우측 요소 끝으로 배치 */
             align-items: center;
             margin-bottom: 20px;
         }
@@ -31,7 +32,8 @@
         /* ★ 게시판 버튼 스타일 추가 */
         .btn-board {
             padding: 8px 15px;
-            background-color: #6c757d; /* 회색 계열 */
+            background-color: #6c757d;
+            /* 회색 계열 */
             color: white;
             border: none;
             border-radius: 5px;
@@ -89,40 +91,65 @@
 
 <body>
 
-<div class="header">
-    <button class="btn-board" onclick="location.href='board.html'">← 게시판으로</button>
+    <div class="header">
+        <button class="btn-board" onclick="location.href='board.html'">← 게시판으로</button>
+        <span id="user-greeting" style="font-weight: bold; color: #555;"></span>
+    </div>
 
-</div>
+    <h1>스터디룸 예약</h1>
 
-<h1>스터디룸 예약</h1>
+    <div id="rooms" class="room-list">
+        <div class="loading">로딩 중...</div>
+    </div>
 
-<div id="rooms" class="room-list">
-    <div class="loading">로딩 중...</div>
-</div>
-
-<script>
-    async function loadRooms() {
-        let url = "/api/rooms"
-        const authToken = sessionStorage.getItem('authToken');
-
-        if (!authToken) {
-            alert("로그인이 필요합니다.");
-            window.location.href = '/login';
-            return;
-        }
-
-        let fetchOptions = {
-            method: "GET",
-            headers: {
-                'X-AUTH-TOKEN': authToken
+    <script>
+        // 사용자 정보 로드
+        async function loadUserInfo() {
+            try {
+                const authToken = sessionStorage.getItem('authToken');
+                if (!authToken) {
+                    document.getElementById('user-greeting').innerHTML = '<a href="/login">로그인 필요</a>';
+                    return;
+                }
+                const res = await fetch('/users/info', {
+                    headers: { 'X-AUTH-TOKEN': authToken }
+                });
+                if (res.ok) {
+                    const user = await res.json();
+                    document.getElementById('user-greeting').textContent = `안녕하세요 ${user.name}님`;
+                } else {
+                    document.getElementById('user-greeting').innerHTML = '<a href="/login">로그인 필요</a>';
+                }
+            } catch (e) {
+                console.error('User info load failed', e);
             }
-        };
-        try {
-            const res = await fetch(url, fetchOptions);
-            const rooms = await res.json();
-            document.getElementById('rooms').innerHTML = rooms.length === 0
-                ? '<p>등록된 룸이 없습니다.</p>'
-                : rooms.map(r => `
+        }
+        loadUserInfo();
+
+        // 룸 목록 로드 (JWT 인증 포함)
+        async function loadRooms() {
+            let url = "/api/rooms";
+            const authToken = sessionStorage.getItem('authToken');
+
+            if (!authToken) {
+                alert("로그인이 필요합니다.");
+                window.location.href = '/login';
+                return;
+            }
+
+            let fetchOptions = {
+                method: "GET",
+                headers: {
+                    'X-AUTH-TOKEN': authToken
+                }
+            };
+
+            try {
+                const res = await fetch(url, fetchOptions);
+                const rooms = await res.json();
+                document.getElementById('rooms').innerHTML = rooms.length === 0
+                    ? '<p>등록된 룸이 없습니다.</p>'
+                    : rooms.map(r => `
                         <div class="room-card" onclick="location.href='room.html?name=' + encodeURIComponent('${r.name}')">
                             <div class="room-name">${r.name}</div>
                             <div>수용: ${r.capacity}명</div>
@@ -131,12 +158,12 @@
                             </div>
                         </div>
                     `).join('');
-        } catch (e) {
-            document.getElementById('rooms').innerHTML = '<p>오류 발생</p>';
+            } catch (e) {
+                document.getElementById('rooms').innerHTML = '<p>오류 발생</p>';
+            }
         }
-    }
-    loadRooms();
-</script>
+        loadRooms();
+    </script>
 </body>
 
 </html>

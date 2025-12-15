@@ -61,7 +61,8 @@ public class JwtUtil {
     public UsernamePasswordAuthenticationToken getAuthentication(String token) {
 
         UserDetails userDetails = myUserDetailsService.loadUserByUsername(this.getUsernameFromToken(token));
-        return new UsernamePasswordAuthenticationToken(userDetails.getUsername(), "",userDetails.getAuthorities());
+        // principal로 userDetails 객체 자체를 전달해야 @AuthenticationPrincipal이 MyUserDetails를 주입받을 수 있음
+        return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }
 
     public String getUsernameFromToken(String token) {
