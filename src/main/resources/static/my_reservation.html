@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>내 예약</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; }
+    h1 { margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background: #f5f5f5; }
+    button { padding: 6px 10px; cursor: pointer; }
+    .muted { color: #777; }
+    .btn-back { display:inline-block; margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+  <div class="btn-back">
+    <a href="rooms.html">← 예약하러 가기</a>
+  </div>
+
+  <h1>내 예약 목록</h1>
+
+  <div id="status" class="muted">로딩 중...</div>
+  <table>
+    <thead>
+      <tr>
+        <th>예약ID</th>
+        <th>룸ID</th>
+        <th>슬롯ID</th>
+        <th>예약일</th>
+        <th>상태</th>
+        <th>기능</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+<script>
+  function getToken() { return sessionStorage.getItem('authToken'); }
+
+  async function loadMyReservations() {
+    const token = getToken();
+    if (!token) {
+      alert("로그인이 필요합니다.");
+      location.href = "/login";
+      return;
+    }
+
+    const status = document.getElementById('status');
+    const tbody = document.getElementById('rows');
+
+    try {
+      const res = await fetch('/api/reservations/me', {
+        headers: { 'X-AUTH-TOKEN': token }
+      });
+
+      if (res.status === 401 || res.status === 403) throw new Error("Unauthorized");
+
+      const list = await res.json();
+
+      if (!list || list.length === 0) {
+        status.textContent = "예약이 없습니다.";
+        tbody.innerHTML = "";
+        return;
+      }
+
+      status.textContent = `총 ${list.length}건`;
+      tbody.innerHTML = list.map(r => {
+        const canCancel = (r.status === 'CONFIRMED'); // ✅ 확정일 때만 취소 버튼 노출
+        return `
+          <tr>
+            <td>${r.reservationId}</td>
+            <td>${r.roomId}</td>
+            <td>${r.slotId}</td>
+            <td>${r.reservationDate ?? '-'}</td>
+            <td>${r.status}</td>
+            <td>
+              ${canCancel ? `<button onclick="cancelReservation(${r.reservationId})">취소</button>` : `-`}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+    } catch (e) {
+      console.error(e);
+      status.textContent = "로드 실패";
+      if (e.message === "Unauthorized") {
+        alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+        sessionStorage.clear();
+        location.href = "/login";
+      }
+    }
+  }
+
+  async function cancelReservation(reservationId) {
+    if (!confirm(`예약(${reservationId})을 취소할까요?`)) return;
+
+    const token = getToken();
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}`, {
+        method: 'DELETE',
+        headers: { 'X-AUTH-TOKEN': token }
+      });
+
+      if (res.status === 401 || res.status === 403) throw new Error("Unauthorized");
+      if (!res.ok) {
+        const text = await res.text();
+        alert("취소 실패: " + text);
+        return;
+      }
+
+      alert("취소 완료");
+      loadMyReservations();
+    } catch (e) {
+      console.error(e);
+      alert("취소 중 오류");
+    }
+  }
+
+  loadMyReservations();
+</script>
+</body>
+</html>

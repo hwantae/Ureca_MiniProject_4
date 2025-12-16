@@ -1,4 +1,3 @@
-// src/main/java/com/mycom/myapp/service/reservation/dto/ReservationResponse.java
 package com.mycom.myapp.service.reservation.dto;
 
 import com.mycom.myapp.domain.Reservation;
@@ -6,6 +5,7 @@ import com.mycom.myapp.domain.ReservationStatus;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -19,6 +19,9 @@ public class ReservationResponse {
     private ReservationStatus status;
     private LocalDateTime reservedAt;
 
+    // ✅ V6 추가
+    private LocalDate reservationDate;
+
     public static ReservationResponse from(Reservation reservation) {
         return ReservationResponse.builder()
                 .reservationId(reservation.getReservationId())
@@ -27,6 +30,7 @@ public class ReservationResponse {
                 .slotId(reservation.getSlotId())
                 .status(reservation.getStatus())
                 .reservedAt(reservation.getReservedAt())
+                .reservationDate(reservation.getReservationDate()) // ✅
                 .build();
     }
 }
