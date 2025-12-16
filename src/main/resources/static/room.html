@@ -1,239 +1,324 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>룸 예약</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-
-        h1 {
-            color: #333;
-        }
-
-        .header {
-            margin-bottom: 20px;
-        }
-
-        .slots {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin: 20px 0;
-        }
-
-        .slot {
-            padding: 15px 20px;
-            border: 1px solid #ddd;
-            background: #fff;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .slot:hover {
-            background: #e0e0e0;
-        }
-
-        .slot.available {
-            border-color: green;
-        }
-
-        .slot.unavailable {
-            border-color: red;
-            background: #fee;
-            cursor: not-allowed;
-        }
-
-        .slot.selected {
-            background: #d0e0ff;
-            border-color: blue;
-        }
-
-        .reserve-section {
-            margin-top: 20px;
-            padding: 15px;
-            background: #fff;
-            border: 1px solid #ddd;
-        }
-
-        button {
-            padding: 10px 30px;
-            font-size: 1em;
-            cursor: pointer;
-        }
-
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>룸 예약</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+    h1 { color: #333; }
+    .header { margin-bottom: 20px; }
+    .slots { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
+    .slot { padding: 15px 18px; border: 1px solid #ddd; background: #fff; cursor: pointer; text-align: center; min-width: 120px; }
+    .slot:hover { background: #e0e0e0; }
+    .slot.available { border-color: green; }
+    .slot.unavailable { border-color: red; background: #fee; cursor: not-allowed; opacity: 0.85; }
+    .slot.reserved { border-color: #666; background: #eee; cursor: not-allowed; opacity: 0.9; }
+    .slot.selected { background: #d0e0ff; border-color: blue; }
+    .reserve-section { margin-top: 20px; padding: 15px; background: #fff; border: 1px solid #ddd; display: flex; align-items: center; gap: 20px; }
+    button { padding: 10px 30px; font-size: 1em; cursor: pointer; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .meta { color: #666; font-size: 0.95em; margin-top: 10px; }
+  </style>
 </head>
-
 <body>
-    <div class="header"><a href="rooms.html">← 목록으로</a></div>
-    <h1 id="title">룸 예약</h1>
+  <div class="header"><a href="rooms.html">← 목록으로</a></div>
+  <h1 id="title">룸 예약</h1>
 
-    <div style="margin:20px 0;">📅 날짜: <input type="date" id="date"></div>
-    <div id="slots" class="slots">로딩 중...</div>
+  <div style="margin:20px 0;">
+    📅 날짜: <input type="date" id="date">
+  </div>
 
-    <div class="reserve-section">
-        선택: <span id="selected">없음</span>
-        <button id="reserveBtn" disabled>예약하기</button>
-    </div>
+  <div class="meta">
+    최대 이용 시간: <span id="maxUsageText">-</span>
+  </div>
 
-    <script>
-        const roomName = new URLSearchParams(location.search).get('name') || '';
-        if (!roomName) location.href = 'rooms.html';
-        document.getElementById('title').textContent = `${roomName} 예약`;
+  <div id="slots" class="slots">로딩 중...</div>
 
-        const dateInput = document.getElementById('date');
-        dateInput.value = new Date().toISOString().split('T')[0];
-        dateInput.addEventListener('change', () => loadSlots(dateInput.value));
+  <div class="reserve-section">
+    선택: <span id="selected">없음</span>
+    <button id="reserveBtn" disabled>예약하기</button>
+  </div>
 
-        let currentMaxUsageMinutes = 120; // 기본값
-        let currentRoomId = null;
-        let selectedStart = null;
-        let selectedEnd = null;
+<script>
+  function getToken() { return sessionStorage.getItem('authToken'); }
 
-        async function loadSlots(date) {
-            const container = document.getElementById('slots');
-            selectedStart = null; selectedEnd = null;
-            updateUI(); // 버튼 초기화
+  function requireLogin() {
+    const token = getToken();
+    if (!token) {
+      alert("로그인이 필요합니다.");
+      location.href = "/login";
+      return false;
+    }
+    return true;
+  }
 
-            try {
-                // 1. Max Time & ID 조회
-                const roomsRes = await fetch('/api/rooms');
-                const rooms = await roomsRes.json();
-                const thisRoom = rooms.find(r => r.name === roomName);
-                if (thisRoom) {
-                    currentMaxUsageMinutes = thisRoom.maxUsageMinutes;
-                    currentRoomId = thisRoom.roomId;
-                }
+  const roomName = new URLSearchParams(location.search).get('name') || '';
+  if (!roomName) location.href = 'rooms.html';
+  document.getElementById('title').textContent = `${roomName} 예약`;
 
-                // 2. 템플릿 조회
-                const slotsRes = await fetch(`/api/rooms/name/${encodeURIComponent(roomName)}/slots`);
-                const slots = await slotsRes.json();
-                if (slots.length === 0) return container.innerHTML = '운영 시간 미설정';
+  const dateInput = document.getElementById('date');
+  dateInput.value = new Date().toISOString().split('T')[0];
+  dateInput.addEventListener('change', () => loadSlots(dateInput.value));
 
-                const range = slots[0];
-                const startH = parseInt(range.startTime.split(':')[0]);
-                const endH = parseInt(range.endTime.split(':')[0]);
+  let currentMaxUsageMinutes = 120;
+  let currentRoomId = null;
 
-                // 3. 블록 조회
-                const blocksRes = await fetch(`/api/rooms/${currentRoomId}/blocks?date=${date}`);
-                const blocks = await blocksRes.json();
-                const blockedTimes = new Set(blocks.map(b => b.startTime.substring(0, 5)));
+  // 슬롯 목록(시간순) 보관
+  let slotList = []; // [{slotId, startHHmm, endHHmm, state}]
+  // 연속 선택
+  let selectedStartIdx = null;
+  let selectedEndIdx = null;
 
-                // 4. 렌더링
-                let html = '';
-                for (let h = startH; h < endH; h++) {
-                    const time = `${String(h).padStart(2, '0')}:00`;
-                    const isBlocked = blockedTimes.has(time);
-                    // 예약 데이터 연동 불가로 reserved는 false
-                    const isReserved = false;
+  // 표시용
+  function formatHHmm(t) { return (t || "").substring(0, 5); }
 
-                    let cls = 'available';
-                    if (isBlocked) cls = 'unavailable';
-                    else if (isReserved) cls = 'reserved';
+  function toLocalDateTimeStr(dateStr, timeStrHHmm) {
+    return `${dateStr}T${timeStrHHmm}:00`;
+  }
 
-                    const action = (cls === 'available') ? `onclick="handleSlotClick('${time}')"` : '';
-                    html += `<div id="slot-${time}" class="slot ${cls}" ${action}>${time}</div>`;
-                }
-                container.innerHTML = html;
+  function minutesOf(hhmm) {
+    const [h, m] = hhmm.split(':').map(Number);
+    return h * 60 + m;
+  }
 
-            } catch (e) {
-                console.error(e);
-                container.innerHTML = '로드 실패';
-            }
+  function calcRangeMinutes(startIdx, endIdx) {
+    const start = slotList[startIdx].startHHmm;
+    const end = slotList[endIdx].endHHmm;
+    return minutesOf(end) - minutesOf(start);
+  }
+
+  async function loadRoomMeta() {
+    const res = await fetch('/api/rooms', { headers: { 'X-AUTH-TOKEN': getToken() } });
+    const rooms = await res.json();
+    const thisRoom = rooms.find(r => r.name === roomName);
+    if (!thisRoom) throw new Error("Room not found");
+    currentRoomId = thisRoom.roomId;
+    currentMaxUsageMinutes = thisRoom.maxUsageMinutes;
+    document.getElementById('maxUsageText').textContent = `${currentMaxUsageMinutes}분`;
+  }
+
+  // ✅ 전체 예약(다른 사람 포함)된 slotId 조회(확정 상태만)
+  async function loadReservedSlotIds(dateStr) {
+    const res = await fetch(`/api/reservations/rooms/${currentRoomId}/reserved-slot-ids?date=${dateStr}`, {
+      headers: { 'X-AUTH-TOKEN': getToken() }
+    });
+    if (!res.ok) return new Set();
+    const list = await res.json(); // List<Long>
+    return new Set(list || []);
+  }
+
+  async function loadBlocks(dateStr) {
+    const res = await fetch(`/api/rooms/${currentRoomId}/blocks?date=${dateStr}`, {
+      headers: { 'X-AUTH-TOKEN': getToken() }
+    });
+    if (!res.ok) return new Set();
+    const blocks = await res.json();
+    return new Set((blocks || []).map(b => formatHHmm(b.startTime)));
+  }
+
+  async function loadSlots(dateStr) {
+    if (!requireLogin()) return;
+
+    const container = document.getElementById('slots');
+    container.innerHTML = "로딩 중...";
+
+    selectedStartIdx = null;
+    selectedEndIdx = null;
+    updateUI();
+
+    try {
+      // 1) roomId, maxUsage
+      await loadRoomMeta();
+
+      // 2) TimeSlot 목록
+      const slotsRes = await fetch(`/api/rooms/name/${encodeURIComponent(roomName)}/slots`, {
+        headers: { 'X-AUTH-TOKEN': getToken() }
+      });
+      const slots = await slotsRes.json();
+      if (!slots || slots.length === 0) {
+        container.innerHTML = '운영 시간 미설정';
+        return;
+      }
+
+      // 3) block / reserved
+      const blockedStartTimes = await loadBlocks(dateStr);
+      const reservedSlotIds = await loadReservedSlotIds(dateStr);
+
+      // 4) slotList 구성 (정렬돼서 온다는 전제: repository orderByStartTimeAsc)
+      slotList = slots.map(s => {
+        const start = formatHHmm(s.startTime);
+        const end = formatHHmm(s.endTime);
+        const isBlocked = blockedStartTimes.has(start);
+        const isReserved = reservedSlotIds.has(s.slotId);
+
+        let state = 'available';
+        if (isBlocked) state = 'unavailable';
+        else if (isReserved) state = 'reserved';
+
+        return { slotId: s.slotId, startHHmm: start, endHHmm: end, state };
+      });
+
+      // 5) 렌더링
+      let html = '';
+      slotList.forEach((s, idx) => {
+        const cls = s.state;
+        const clickable = (cls === 'available') ? `onclick="handleSlotClick(${idx})"` : '';
+        html += `<div id="slot-${idx}" class="slot ${cls}" ${clickable}>
+                  ${s.startHHmm} ~ ${s.endHHmm}
+                </div>`;
+      });
+      container.innerHTML = html;
+
+    } catch (e) {
+      console.error(e);
+      container.innerHTML = '로드 실패';
+    }
+  }
+
+  // 연속 선택 로직 복구:
+  // 1) 첫 클릭: start
+  // 2) 두번째 클릭: end (start~end 범위)
+  // 3) 세번째 클릭: start 재설정
+  function handleSlotClick(idx) {
+    if (slotList[idx].state !== 'available') return;
+
+    if (selectedStartIdx === null) {
+      selectedStartIdx = idx;
+      selectedEndIdx = null;
+      renderSelection();
+      return;
+    }
+
+    if (selectedEndIdx === null) {
+      // end 선택 단계
+      let start = selectedStartIdx;
+      let end = idx;
+
+      if (end < start) { // 역선택이면 swap
+        [start, end] = [end, start];
+      }
+
+      // 중간에 unavailable/reserved 끼면 막기
+      for (let i = start; i <= end; i++) {
+        if (slotList[i].state !== 'available') {
+          alert('선택한 구간에 예약 불가능한 시간이 포함되어 있습니다.');
+          return;
         }
+      }
 
-        function handleSlotClick(time) {
-            if (selectedStart === null) {
-                selectedStart = time;
-                selectedEnd = null;
-            } else if (selectedEnd === null) {
-                if (time < selectedStart) {
-                    selectedStart = time;
-                } else {
-                    if (validateRange(selectedStart, time)) {
-                        selectedEnd = time;
-                    }
-                }
-            } else {
-                selectedStart = time;
-                selectedEnd = null;
-            }
-            renderSelection();
-        }
+      // 최대 이용 시간 체크
+      const minutes = calcRangeMinutes(start, end);
+      if (minutes > currentMaxUsageMinutes) {
+        alert(`최대 이용 시간은 ${currentMaxUsageMinutes}분입니다.`);
+        return;
+      }
 
-        function validateRange(start, end) {
-            const startH = parseInt(start.split(':')[0]);
-            const endH = parseInt(end.split(':')[0]);
-            const duration = (endH - startH + 1) * 60;
+      selectedStartIdx = start;
+      selectedEndIdx = end;
+      renderSelection();
+      return;
+    }
 
-            if (duration > currentMaxUsageMinutes) {
-                alert(`최대 이용 시간은 ${currentMaxUsageMinutes / 60}시간(${currentMaxUsageMinutes}분)입니다.`);
-                return false;
-            }
+    // 이미 범위 선택되어 있으면 새 시작으로 리셋
+    selectedStartIdx = idx;
+    selectedEndIdx = null;
+    renderSelection();
+  }
 
-            // 중간 블록 체크
-            for (let h = startH; h <= endH; h++) {
-                const t = `${String(h).padStart(2, '0')}:00`;
-                const el = document.getElementById(`slot-${t}`);
-                if (el && (el.classList.contains('unavailable') || el.classList.contains('reserved'))) {
-                    alert('선택한 구간에 예약 불가능한 시간이 포함되어 있습니다.');
-                    return false;
-                }
-            }
-            return true;
-        }
+  function renderSelection() {
+    document.querySelectorAll('.slot').forEach(e => e.classList.remove('selected'));
 
-        function renderSelection() {
-            document.querySelectorAll('.slot').forEach(e => e.classList.remove('selected'));
+    if (selectedStartIdx !== null && selectedEndIdx === null) {
+      const el = document.getElementById(`slot-${selectedStartIdx}`);
+      if (el) el.classList.add('selected');
+    } else if (selectedStartIdx !== null && selectedEndIdx !== null) {
+      for (let i = selectedStartIdx; i <= selectedEndIdx; i++) {
+        const el = document.getElementById(`slot-${i}`);
+        if (el) el.classList.add('selected');
+      }
+    }
+    updateUI();
+  }
 
-            if (selectedStart && !selectedEnd) {
-                const el = document.getElementById(`slot-${selectedStart}`);
-                if (el) el.classList.add('selected');
-            } else if (selectedStart && selectedEnd) {
-                const startH = parseInt(selectedStart.split(':')[0]);
-                const endH = parseInt(selectedEnd.split(':')[0]);
-                for (let h = startH; h <= endH; h++) {
-                    const t = `${String(h).padStart(2, '0')}:00`;
-                    const el = document.getElementById(`slot-${t}`);
-                    if (el) el.classList.add('selected');
-                }
-            }
-            updateUI();
-        }
+  function updateUI() {
+    const btn = document.getElementById('reserveBtn');
+    const span = document.getElementById('selected');
 
-        function updateUI() {
-            const btn = document.getElementById('reserveBtn');
-            const span = document.getElementById('selected');
+    if (selectedStartIdx === null) {
+      span.textContent = '없음';
+      btn.disabled = true;
+      return;
+    }
 
-            if (selectedStart) {
-                let txt = selectedStart;
-                if (selectedEnd) txt += ` ~ ${selectedEnd}`;
-                span.textContent = txt;
-                btn.disabled = false;
-            } else {
-                span.textContent = '없음';
-                btn.disabled = true;
-            }
-        }
+    if (selectedEndIdx === null) {
+      const s = slotList[selectedStartIdx];
+      span.textContent = `${s.startHHmm} ~ ${s.endHHmm}`;
+      btn.disabled = false;
+      return;
+    }
 
-        document.getElementById('reserveBtn').onclick = () => {
-            alert(`[B-Role 연동 필요]\n구간: ${document.getElementById('selected').textContent}\n예약 API를 호출해야 합니다.`);
+    const s = slotList[selectedStartIdx];
+    const e = slotList[selectedEndIdx];
+    const minutes = calcRangeMinutes(selectedStartIdx, selectedEndIdx);
+    span.textContent = `${s.startHHmm} ~ ${e.endHHmm} (${minutes}분)`;
+    btn.disabled = false;
+  }
+
+  // ✅ 예약 API 호출: 선택 범위 내 슬롯들을 순서대로 예약 생성
+  document.getElementById('reserveBtn').onclick = async () => {
+    if (!requireLogin()) return;
+    if (selectedStartIdx === null) return;
+
+    const dateStr = dateInput.value;
+
+    let start = selectedStartIdx;
+    let end = (selectedEndIdx === null) ? selectedStartIdx : selectedEndIdx;
+
+    // 최종 방어(다시 한 번 maxUsage)
+    const minutes = calcRangeMinutes(start, end);
+    if (minutes > currentMaxUsageMinutes) {
+      alert(`최대 이용 시간은 ${currentMaxUsageMinutes}분입니다.`);
+      return;
+    }
+
+    const targets = slotList.slice(start, end + 1);
+
+    try {
+      for (const s of targets) {
+        const payload = {
+          roomId: currentRoomId,
+          slotId: s.slotId,
+          startTime: toLocalDateTimeStr(dateStr, s.startHHmm),
+          endTime: toLocalDateTimeStr(dateStr, s.endHHmm)
         };
 
-        loadSlots(dateInput.value);
-    </script>
-</body>
+        const res = await fetch('/api/reservations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-AUTH-TOKEN': getToken()
+          },
+          body: JSON.stringify(payload)
+        });
 
+        if (!res.ok) {
+          const msg = await res.text();
+          alert(`예약 실패(${s.startHHmm}): ${msg}`);
+          return;
+        }
+      }
+
+      alert("예약 완료!");
+      await loadSlots(dateStr);
+
+    } catch (e) {
+      console.error(e);
+      alert("서버 통신 오류");
+    }
+  };
+
+  loadSlots(dateInput.value);
+</script>
+</body>
 </html>

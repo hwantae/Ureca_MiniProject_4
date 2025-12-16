@@ -1,159 +1,150 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>관리자 - 룸 관리</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #fff0f0;
-        }
-
-        h1 {
-            color: #333;
-        }
-
-        .header {
-            margin-bottom: 20px;
-        }
-
-        .slots {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin: 20px 0;
-        }
-
-        .slot {
-            padding: 15px 20px;
-            border: 1px solid #ddd;
-            background: #fff;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .slot:hover {
-            background: #e0e0e0;
-        }
-
-        .slot.unavailable {
-            border-color: red;
-            background: #fee;
-            opacity: 0.8;
-        }
-
-        .slot.unavailable:hover {
-            background: #fcc;
-        }
-
-        /* 삭제 암시 */
-        .slot.available {
-            border-color: green;
-        }
-
-        .slot.available:hover {
-            background: #ddd;
-        }
-
-        /* 차단 암시 */
-
-        .legend {
-            margin-top: 20px;
-            font-size: 0.9em;
-            color: #666;
-        }
-
-        .legend span {
-            margin-right: 15px;
-        }
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #fff0f0; }
+        h1 { color: #333; text-align:center; }
+        .header { margin-bottom: 20px; text-align:center; }
+        .slots { display:flex; flex-wrap:wrap; gap:10px; margin:20px 0; justify-content:center; }
+        .slot { padding: 15px 20px; border: 1px solid #ddd; background: #fff; cursor: pointer; text-align:center; min-width:140px; }
+        .slot:hover { background:#e0e0e0; }
+        .slot.unavailable { border-color: red; background:#fee; opacity:0.85; }
+        .slot.available { border-color: green; }
+        .legend { margin-top: 20px; font-size: 0.9em; color: #666; text-align:center; }
+        .legend span { margin-right: 15px; }
     </style>
 </head>
 
 <body>
-    <div class="header"><a href="admin_rooms.html">← 관리자 목록으로</a></div>
-    <h1 id="title">룸 관리 (블록 설정)</h1>
+<div class="header"><a href="admin_rooms.html">← 관리자 목록으로</a></div>
+<h1 id="title">룸 관리 (블록 설정)</h1>
 
-    <div style="margin:20px 0;">📅 날짜: <input type="date" id="date"></div>
-    <div id="slots" class="slots">로딩 중...</div>
+<div style="margin:20px 0; text-align:center;">📅 날짜: <input type="date" id="date"></div>
+<div id="slots" class="slots">로딩 중...</div>
 
-    <div class="legend">
-        <span>⬜ 이용 가능 (클릭하여 차단)</span>
-        <span>🟥 차단됨/사용중 (클릭하여 해제)</span>
-    </div>
+<div class="legend">
+    <span>⬜ 이용 가능 (클릭하여 차단)</span>
+    <span>🟥 차단됨/사용중 (클릭하여 해제)</span>
+</div>
 
-    <script>
-        const roomName = new URLSearchParams(location.search).get('name') || '';
-        if (!roomName) location.href = 'admin_rooms.html';
-        document.getElementById('title').textContent = `${roomName} 관리`;
+<script>
+    function getToken() {
+        return sessionStorage.getItem('authToken');
+    }
 
-        const dateInput = document.getElementById('date');
-        dateInput.value = new Date().toISOString().split('T')[0];
-        dateInput.addEventListener('change', () => loadSlots(dateInput.value));
+    const roomName = new URLSearchParams(location.search).get('name') || '';
+    if (!roomName) location.href = 'admin_rooms.html';
+    document.getElementById('title').textContent = `${roomName} 관리`;
 
-        let roomId = null;
-        let currentBlocks = new Map(); // time -> blockId
+    const dateInput = document.getElementById('date');
+    dateInput.value = new Date().toISOString().split('T')[0];
+    dateInput.addEventListener('change', () => loadSlots(dateInput.value));
 
-        async function loadSlots(date) {
-            const container = document.getElementById('slots');
-            try {
-                // 1. 템플릿 (운영 범위)
-                const slotsRes = await fetch(`/api/rooms/name/${encodeURIComponent(roomName)}/slots`);
-                const slots = await slotsRes.json();
-                if (slots.length === 0) return container.innerHTML = '운영 시간 미설정';
+    let roomId = null;
+    let currentBlocks = new Map(); // startHHmm -> blockId
+    let slotList = []; // [{slotId, startHHmm, endHHmm}]
 
-                const range = slots[0];
-                roomId = range.roomId;
-                const startH = parseInt(range.startTime.split(':')[0]);
-                const endH = parseInt(range.endTime.split(':')[0]);
+    function formatHHmm(t) {
+        return (t || "").substring(0, 5);
+    }
 
-                // 2. 블록
-                const blocksRes = await fetch(`/api/rooms/${roomId}/blocks?date=${date}`);
-                const blocks = await blocksRes.json();
-                currentBlocks.clear();
-                blocks.forEach(b => currentBlocks.set(b.startTime.substring(0, 5), b.id));
+    async function loadSlots(dateStr) {
+        const container = document.getElementById('slots');
+        container.innerHTML = "로딩 중...";
 
-                // 3. 렌더링 (1시간 단위)
-                let html = '';
-                for (let h = startH; h < endH; h++) {
-                    const time = `${String(h).padStart(2, '0')}:00`;
-                    const isBlocked = currentBlocks.has(time);
-                    const cls = isBlocked ? 'unavailable' : 'available';
-                    html += `<div class="slot ${cls}" onclick="toggleBlock('${time}', ${isBlocked})">${time}</div>`;
-                }
-                container.innerHTML = html;
-            } catch (e) { container.innerHTML = '로드 실패'; }
+        try {
+            const token = getToken();
+            if (!token) {
+                alert("로그인이 필요합니다.");
+                location.href = "/login";
+                return;
+            }
+
+            // 1) 템플릿 슬롯(여러 개) 조회
+            const slotsRes = await fetch(`/api/rooms/name/${encodeURIComponent(roomName)}/slots`, {
+                headers: { 'X-AUTH-TOKEN': token }
+            });
+            const slots = await slotsRes.json();
+            if (!slots || slots.length === 0) {
+                container.innerHTML = '운영 시간 미설정';
+                return;
+            }
+
+            // roomId는 슬롯에 들어있다고 가정(너의 이전 코드도 이 방식)
+            roomId = slots[0].roomId;
+
+            slotList = slots.map(s => ({
+                slotId: s.slotId,
+                startHHmm: formatHHmm(s.startTime),
+                endHHmm: formatHHmm(s.endTime)
+            })).sort((a, b) => a.startHHmm.localeCompare(b.startHHmm));
+
+            // 2) 블록 조회
+            const blocksRes = await fetch(`/api/rooms/${roomId}/blocks?date=${dateStr}`, {
+                headers: { 'X-AUTH-TOKEN': token }
+            });
+            const blocks = await blocksRes.json();
+            currentBlocks.clear();
+            (blocks || []).forEach(b => currentBlocks.set(formatHHmm(b.startTime), b.id));
+
+            // 3) 렌더링(슬롯 전체)
+            let html = '';
+            slotList.forEach(s => {
+                const isBlocked = currentBlocks.has(s.startHHmm);
+                const cls = isBlocked ? 'unavailable' : 'available';
+                html += `<div class="slot ${cls}" onclick="toggleBlock('${s.startHHmm}', '${s.endHHmm}', ${isBlocked})">
+                            ${s.startHHmm} ~ ${s.endHHmm}
+                         </div>`;
+            });
+            container.innerHTML = html;
+
+        } catch (e) {
+            console.error(e);
+            container.innerHTML = '로드 실패';
+        }
+    }
+
+    async function toggleBlock(startHHmm, endHHmm, isBlocked) {
+        const token = getToken();
+        if (!token) {
+            alert("로그인이 필요합니다.");
+            location.href = "/login";
+            return;
         }
 
-        async function toggleBlock(time, isBlocked) {
-            if (isBlocked) {
-                // 해제 (DELETE)
-                if (!confirm(`${time} 블록을 해제하시겠습니까?`)) return;
-                const blockId = currentBlocks.get(time);
-                await fetch(`/api/rooms/${roomId}/blocks/${blockId}`, { method: 'DELETE' });
-            } else {
-                // 차단 (POST)
-                if (!confirm(`${time}을 막으시겠습니까?`)) return;
-                // 종료시간 = 시작시간 + 1시간 (단순화)
-                const [h, m] = time.split(':').map(Number);
-                const endH = h + 1;
-                const endTime = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        if (isBlocked) {
+            if (!confirm(`${startHHmm} 블록을 해제하시겠습니까?`)) return;
+            const blockId = currentBlocks.get(startHHmm);
 
-                await fetch(`/api/rooms/${roomId}/blocks`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ blockDate: dateInput.value, startTime: time, endTime: endTime })
-                });
-            }
-            loadSlots(dateInput.value);
+            await fetch(`/api/rooms/${roomId}/blocks/${blockId}`, {
+                method: 'DELETE',
+                headers: { 'X-AUTH-TOKEN': token }
+            });
+
+        } else {
+            if (!confirm(`${startHHmm} ~ ${endHHmm} 을(를) 막으시겠습니까?`)) return;
+
+            await fetch(`/api/rooms/${roomId}/blocks`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-AUTH-TOKEN': token
+                },
+                body: JSON.stringify({
+                    blockDate: dateInput.value,
+                    startTime: startHHmm,
+                    endTime: endHHmm
+                })
+            });
         }
 
         loadSlots(dateInput.value);
-    </script>
-</body>
+    }
 
+    loadSlots(dateInput.value);
+</script>
+</body>
 </html>

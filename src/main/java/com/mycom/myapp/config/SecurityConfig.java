@@ -72,6 +72,7 @@ public class SecurityConfig {
                                         "/api/rooms/**",
                                         "/api/slots/**",
                                         "/board_write.html",
+                                        "/my_reservation.html",
                                         "/api/boards/**"
                                 ).permitAll()
                                 .requestMatchers("/users/**").hasAnyRole("USER", "ADMIN")
