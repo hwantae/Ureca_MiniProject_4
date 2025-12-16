@@ -33,15 +33,15 @@ public class TimeSlotController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    // V5: 가상 설정 조회
-    @GetMapping("/api/slots/config")
-    public java.util.List<com.mycom.myapp.dto.SlotConfigDTO> getGlobalConfig() {
-        return timeSlotService.getGlobalConfig();
-    }
+//    // V5: 가상 설정 조회
+//    @GetMapping("/api/slots/config")
+//    public java.util.List<com.mycom.myapp.dto.SlotConfigDTO> getGlobalConfig() {
+//        return timeSlotService.getGlobalConfig();
+//    }
 
-    // V5: 가상 설정 업데이트
-    @PutMapping("/api/slots/config")
-    public void updateGlobalConfig(@RequestBody java.util.List<com.mycom.myapp.dto.SlotConfigDTO> configs) {
-        timeSlotService.updateGlobalConfig(configs);
-    }
+//    // V5: 가상 설정 업데이트
+//    @PutMapping("/api/slots/config")
+//    public void updateGlobalConfig(@RequestBody java.util.List<com.mycom.myapp.dto.SlotConfigDTO> configs) {
+//        timeSlotService.updateGlobalConfig(configs);
+//    }
 }
