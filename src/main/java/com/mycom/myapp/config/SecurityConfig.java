@@ -55,7 +55,7 @@ public class SecurityConfig {
                                         "/users/**",
                                         // board 는 로그인이 필요
                                         "/board.html",	// hyberlink get 요청 허락
-//                		"/csrf-token"
+//                		"/csrf-token",
                                         // 껍데기만 허락
                                         "/assets/**",
                                         "/css/**",
