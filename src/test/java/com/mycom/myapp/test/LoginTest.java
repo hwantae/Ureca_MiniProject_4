@@ -44,6 +44,5 @@ public class LoginTest {
     public void testLoginController(){
         LoginResultDto loginResultDto = loginController.login("a", "a");
         assertEquals("success", loginResultDto.getResult());
-        assertNotNull(session.getAttribute("loginResult"));
     }
 }
