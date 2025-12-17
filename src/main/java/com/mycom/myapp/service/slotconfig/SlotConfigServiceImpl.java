@@ -66,6 +66,7 @@ public class SlotConfigServiceImpl implements SlotConfigService {
         // 4) 기존 time_slot 전부 삭제
         for (Room r : rooms) {
             timeSlotRepository.deleteByRoomId(r.getRoomId());
+            timeSlotRepository.flush();
         }
 
         // 5) 새 configs(= 1시간 단위로 분해된 목록) 기준으로 모든 룸에 재생성

@@ -288,16 +288,32 @@
     async function openConfigModal() {
         const headers = { 'X-AUTH-TOKEN': getToken() };
 
+        // helper
+        const hhmm = (s) => (s || '').substring(0, 5);
+        const toMinutes = (t) => {
+            const [h, m] = hhmm(t).split(':').map(Number);
+            return h * 60 + m;
+        };
+        const fromMinutes = (min) => {
+            const h = String(Math.floor(min / 60)).padStart(2, '0');
+            const m = String(min % 60).padStart(2, '0');
+            return `${h}:${m}`;
+        };
+
         try {
-            // 1. 운영 시간
+            // 1) 운영 시간 (여러 행일 수 있음 → min/max로 표시)
             const res = await fetch('/api/slots/config', { headers });
             const configs = await res.json();
+
             if (configs && configs.length > 0) {
-                document.getElementById('globalStart').value = configs[0].startTime.substring(0, 5);
-                document.getElementById('globalEnd').value = configs[0].endTime.substring(0, 5);
+                const minStart = Math.min(...configs.map(c => toMinutes(c.startTime)));
+                const maxEnd = Math.max(...configs.map(c => toMinutes(c.endTime)));
+
+                document.getElementById('globalStart').value = fromMinutes(minStart);
+                document.getElementById('globalEnd').value = fromMinutes(maxEnd);
             }
 
-            // 2. 최대 이용 시간
+            // 2) 최대 이용 시간
             const roomsRes = await fetch('/api/rooms', { headers });
             const roomsData = await roomsRes.json();
             const rooms = Array.isArray(roomsData) ? roomsData : (roomsData.list || []);
@@ -312,6 +328,7 @@
             alert("설정 정보를 불러오는데 실패했습니다.");
         }
     }
+
 
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
@@ -363,8 +380,8 @@
     async function saveConfig() {
         if (!confirm('모든 룸의 운영 시간과 이용 규칙이 변경됩니다.\n계속하시겠습니까?')) return;
 
-        const start = document.getElementById('globalStart').value;
-        const end = document.getElementById('globalEnd').value;
+        const start = document.getElementById('globalStart').value; // "HH:mm"
+        const end = document.getElementById('globalEnd').value;     // "HH:mm"
         const maxUsage = document.getElementById('globalMaxUsage').value;
 
         if (!start || !end || !maxUsage) return alert('모든 항목을 입력하세요');
@@ -375,23 +392,45 @@
             'X-AUTH-TOKEN': getToken()
         };
 
-        // 1. 운영 시간 저장
-        await fetch('/api/slots/config', {
-            method: 'PUT',
-            headers: headers,
-            body: JSON.stringify([{ startTime: start, endTime: end }])
-        });
+        try {
+            // 1) 운영 시간 저장
+            const res1 = await fetch('/api/slots/config', {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify([{ startTime: start, endTime: end }])
+            });
 
-        // 2. 최대 이용 시간 저장
-        await fetch('/api/rooms/config/max-usage', {
-            method: 'PUT',
-            headers: headers,
-            body: JSON.stringify({ minutes: parseInt(maxUsage) })
-        });
+            if (!res1.ok) {
+                const text = await res1.text();
+                alert('운영 시간 저장 실패\n' + text);
+                return;
+            }
 
-        closeModal('configModal');
-        alert('저장 완료');
+            // 2) 최대 이용 시간 저장
+            const res2 = await fetch('/api/rooms/config/max-usage', {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify({ minutes: parseInt(maxUsage) })
+            });
+
+            if (!res2.ok) {
+                const text = await res2.text();
+                alert('최대 이용 시간 저장 실패\n' + text);
+                return;
+            }
+
+            closeModal('configModal');
+            alert('저장 완료!');
+
+            // ✅ 자동 새로고침 (운영시간 변경 즉시 UI 반영)
+            location.reload();
+
+        } catch (e) {
+            console.error(e);
+            alert('저장 중 서버 통신 오류');
+        }
     }
+
 </script>
 </body>
 
