@@ -58,7 +58,7 @@ public class ReservationServiceImpl implements ReservationService {
         validator.validateNotPastSlot(timeSlot, targetDate);
         validator.validateMaxUsage(timeSlot, room);
 
-        // ✅ 4-1. 관리자 차단(block) 검증 (C담당 기능이지만, 예약 생성 시 필수 체크)
+        // 4-1. 관리자 차단(block) 검증 (C담당 기능이지만, 예약 생성 시 필수 체크)
         boolean blocked = roomTimeBlockRepository.existsByRoomIdAndBlockDateAndStartTime(
                 room.getRoomId(),
                 targetDate,
@@ -84,7 +84,6 @@ public class ReservationServiceImpl implements ReservationService {
             // timeSlotRepository.save(timeSlot);
 
             // 8. Reservation 도메인 객체 생성 (즉시 확정)
-            // ✅ 승인/반려 없음 → create()에서 CONFIRMED로 생성
             Reservation reservation = Reservation.create(userId, room, timeSlot, targetDate);
 
             // 9. 저장 (DB 유니크 제약조건에 의해 중복 시 예외 발생)
@@ -104,14 +103,10 @@ public class ReservationServiceImpl implements ReservationService {
     @Transactional(readOnly = true)
     public List<Reservation> getUserReservations(Long userId) {
         // return reservationRepository.findByUserId(userId);
-
-        // ✅ 정렬이 필요하면 아래 메서드 추가 후 사용
         return reservationRepository.findByUserIdOrderByReservationDateDesc(userId);
     }
 
-    // ==========================
     // 예약 취소
-    // ==========================
     @Override
     @Transactional
     public void cancelReservation(Long userId, Long reservationId) {
@@ -131,7 +126,7 @@ public class ReservationServiceImpl implements ReservationService {
         // 5. 상태 전이 (도메인 메서드)
         reservation.cancel();
 
-        // ✅ [중요] V5의 UNIQUE(room_id, slot_id, reservation_date) 때문에
+        //    V5의 UNIQUE(room_id, slot_id, reservation_date) 때문에
         //    CANCELED로만 바꾸면 같은 슬롯/날짜로 재예약이 불가능해짐.
         //    최종 단계에서는 "취소 = 삭제"로 처리해서 재예약 가능하도록 한다.
         reservationRepository.delete(reservation);
